@@ -180,7 +180,7 @@ def main():
     exec_max_size = 1000
     val_max = 100
     num_training_eps = 1000
-    num_exec_eps = 1000
+    num_exec_eps = 100
 
     algorithms = [quicksort_partition, insertion_sort]
 
@@ -228,14 +228,14 @@ def main():
             if sorted(orig_l) != learned_l:
                 assert False
 
-    for i in range(0, 101):
-        ins_results[i] /= 100
-        q_results[i] /= 100
-        learned_results[i] /= 100
+    for i in range(0, exec_max_size):
+        ins_results[i] /= num_exec_eps
+        q_results[i] /= num_exec_eps
+        learned_results[i] /= num_exec_eps
 
-    plt.plot(range(1, 101), ins_results, label="insertion")
-    plt.plot(range(1, 101), q_results, label="quick")
-    plt.plot(range(1, 101), learned_results, label="learned")
+    plt.plot(range(1, exec_max_size+1), ins_results, label="insertion")
+    plt.plot(range(1, exec_max_size+1), q_results, label="quick")
+    plt.plot(range(1, exec_max_size+1), learned_results, label="learned")
     plt.legend(loc="upper right")
     plt.show()
 
