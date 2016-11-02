@@ -83,11 +83,16 @@ class WAgent:                               # agent who uses WoLF Policy Hill Cl
             delta = delta_w
         else:
             delta = delta_l
+        sum_val = 0
         for a in self.A:
             if a == self.max_a():
                 self.pi[self.prev_state + ", " + a] += delta
+                if self.pi[self.prev_state + ", " + a] > 1:
+                    self.pi[self.prev_state + ", " + a] = 1
             else:
                 self.pi[self.prev_state + ", " + a] -= delta / (len(self.A)-1)
+                if self.pi[self.prev_state + ", " + a] < 0:
+                    self.pi[self.prev_state + ", " + a] = 0
 
 class QAgent:                               # agent who uses Q-Learning
     def __init__(self):
@@ -307,20 +312,38 @@ def main():
     trained_agentB = s.agentA
 
     # Test
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    # vs. Random
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "WR")
     steps = 0
     won = 0
     s.agentA = trained_agentA
-    s.agentB = RAgent()
-    # s.agentB = trained_agentB
     games_played = 0
     while steps < steps_tested:
         cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
         steps += cur_steps
         won += cur_won
         games_played += 1
+    num_games_WWR = games_played
+    percent_won_WWR = won / games_played * 100
     print("num games: ", games_played)
-    print("WR percentage games won: ", won/games_played * 100, "%")
+    print("WW vs. random percentage games won: ", won/games_played * 100, "%")
+
+    # vs. Competitor
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    steps = 0
+    won = 0
+    s.agentA = trained_agentA
+    s.agentB = trained_agentB
+    games_played = 0
+    while steps < steps_tested:
+        cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
+        steps += cur_steps
+        won += cur_won
+        games_played += 1
+    num_games_WWC = games_played
+    percent_won_WWC = won / games_played * 100
+    print("num games: ", games_played)
+    print("WW vs. competitor percentage games won: ", won/games_played * 100, "%")
 
     # WR
     # Train AgentA
@@ -341,20 +364,37 @@ def main():
     trained_agentB = s.agentA
 
     # Test
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    # vs. random
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "WR")
     steps = 0
     won = 0
     s.agentA = trained_agentA
-    s.agentB = RAgent()
-    # s.agentB = trained_agentB
     games_played = 0
     while steps < steps_tested:
         cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
         steps += cur_steps
         won += cur_won
         games_played += 1
+    num_games_WRR = games_played
+    percent_won_WRR = won / games_played * 100
     print("num games: ", games_played)
-    print("WR percentage games won: ", won/games_played * 100, "%")
+    print("WR vs. random percentage games won: ", won/games_played * 100, "%")
+
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    steps = 0
+    won = 0
+    s.agentA = trained_agentA
+    s.agentB = trained_agentB
+    games_played = 0
+    while steps < steps_tested:
+        cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
+        steps += cur_steps
+        won += cur_won
+        games_played += 1
+    num_games_WRC = games_played
+    percent_won_WRC = won / games_played * 100
+    print("num games: ", games_played)
+    print("WR vs. competitor percentage games won: ", won/games_played * 100, "%")
 
     # QQ
     # Train AgentA
@@ -375,20 +415,38 @@ def main():
     trained_agentB = s.agentA
 
     # Test
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    # vs. Random
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QR")
     steps = 0
     won = 0
     s.agentA = trained_agentA
-    s.agentB = RAgent()
-    # s.agentB = trained_agentB
     games_played = 0
     while steps < steps_tested:
         cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
         steps += cur_steps
         won += cur_won
         games_played += 1
+    num_games_QQR = games_played
+    percent_won_QQR = won / games_played * 100
     print("num games: ", games_played)
-    print("QQ percentage games won: ", won/games_played * 100, "%")
+    print("QQ vs. random percentage games won: ", won/games_played * 100, "%")
+
+    # vs. Competitor
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    steps = 0
+    won = 0
+    s.agentA = trained_agentA
+    s.agentB = trained_agentB
+    games_played = 0
+    while steps < steps_tested:
+        cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
+        steps += cur_steps
+        won += cur_won
+        games_played += 1
+    num_games_QQC = games_played
+    percent_won_QQC = won / games_played * 100
+    print("num games: ", games_played)
+    print("QQ vs. competitor percentage games won: ", won/games_played * 100, "%")
 
     # QR
     # Train AgentA
@@ -409,11 +467,28 @@ def main():
     trained_agentB = s.agentA
 
     # Test
+    # vs. Random
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QR")
+    steps = 0
+    won = 0
+    s.agentA = trained_agentA
+    s.agentB = RAgent()
+    games_played = 0
+    while steps < steps_tested:
+        cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
+        steps += cur_steps
+        won += cur_won
+        games_played += 1
+    num_games_QRR = games_played
+    percent_won_QRR = won / games_played * 100
+    print("num games: ", games_played)
+    print("QR vs. random percentage games won: ", won/games_played * 100, "%")
+
+
     s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
     steps = 0
     won = 0
     s.agentA = trained_agentA
-    # s.agentB = RAgent()
     s.agentB = trained_agentB
     games_played = 0
     while steps < steps_tested:
@@ -421,7 +496,34 @@ def main():
         steps += cur_steps
         won += cur_won
         games_played += 1
+    num_games_QRC = games_played
+    percent_won_QRC = won / games_played * 100
     print("num games: ", games_played)
-    print("QQ percentage games won: ", won/games_played * 100, "%")
+    print("QR vs. competitor percentage games won: ", won/games_played * 100, "%")
+
+
+    num_games = [num_games_WWR, num_games_WWC, num_games_WRR, num_games_WRC, num_games_QQR, num_games_QQC, num_games_QRR, num_games_QRC]
+    labels = ["WWR", "WWC", "WRR", "WRC", "QQR", "QQC", "QRR", "QRC"]
+
+    fig = plt.figure()
+
+    width = .35
+    ind = np.arange(len(num_games))
+    plt.bar(ind, num_games, width=width)
+    plt.xticks(ind + width / 2, labels)
+    plt.title("Number of Games Played")
+    plt.show()
+
+    percent_won = [percent_won_WWR, percent_won_WWC, percent_won_WRR, percent_won_WRC, percent_won_QQR, percent_won_QQC, percent_won_QRR, percent_won_QRC]
+    labels = ["WWR", "WWC", "WRR", "WRC", "QQR", "QQC", "QRR", "QRC"]
+
+    fig = plt.figure()
+
+    width = .35
+    ind = np.arange(len(percent_won))
+    plt.bar(ind, percent_won, width=width)
+    plt.xticks(ind + width / 2, labels)
+    plt.title("Percent Won")
+    plt.show()
 
 main()
