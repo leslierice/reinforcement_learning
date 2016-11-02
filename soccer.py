@@ -10,7 +10,7 @@ import random
 
 DEBUG = False
 
-class WAgent:
+class WAgent:                               # agent who uses WoLF Policy Hill Climbing
     def __init__(self):
         self.A = ["N", "S", "E", "W", "X"]
         self.pos = [0, 0]
@@ -83,18 +83,13 @@ class WAgent:
             delta = delta_w
         else:
             delta = delta_l
-        change = 0
-        if a_action == self.max_a():
-            change = delta
-        else:
-            change = -delta / (len(self.A)-1)
         for a in self.A:
-            if a == a_action:
-                self.pi[self.prev_state + ", " + a] += change
+            if a == self.max_a():
+                self.pi[self.prev_state + ", " + a] += delta
             else:
-                self.pi[self.prev_state + ", " + a] += -change/(len(self.A)-1)
+                self.pi[self.prev_state + ", " + a] -= delta / (len(self.A)-1)
 
-class QAgent:
+class QAgent:                               # agent who uses Q-Learning
     def __init__(self):
         self.A = ["N", "S", "E", "W", "X"]
         self.cur_state = "0, 0, 0, 0"
@@ -140,7 +135,7 @@ class QAgent:
     def update_values(self, a_action, alpha, reward, gamma, delta_l, delta_w):
         self.Q[self.prev_state + ", " + a_action] += alpha * (reward + gamma * self.max_q() - self.Q[self.prev_state + ", " + a_action])
 
-class RAgent:
+class RAgent:                               # agent who uses random policy
     def __init__(self):
         self.A = ["N", "S", "E", "W", "X"]
 
@@ -157,9 +152,10 @@ class RAgent:
         return random.choice(self.A)
 
 class Soccer:
-    def __init__(self, epsilon, alpha, gamma, version, delta_l=None, delta_w=None):
+    def __init__(self, epsilon, alpha, decay, gamma, version, delta_l=None, delta_w=None):
         self.epsilon = epsilon                  # exploration parameter
-        self.alpha = alpha                      # learning rate
+        self.alpha = alpha                      # learning rate agent B
+        self.decay = decay
         self.gamma = gamma                      # discount factor
         self.version = version                  # versions of learning methods used
         self.delta_l = delta_l
@@ -200,12 +196,6 @@ class Soccer:
         else:
             return [0, 0]
 
-    def max_q(self, agent, cur_state):
-        return max(agent.Q[cur_state, a] for a in self.A)
-
-    def min_q(self, agent, cur_state):
-        return min(agent.Q[cur_state, a] for a in self.A)
-
     def move_a(self, a_action):                   # move A according to action given
         reward = 0
         new_a_pos = list(map(sum, zip(self.agentA.pos, self.action(a_action))))
@@ -236,22 +226,24 @@ class Soccer:
             reward_a = self.move_a(a_action)
             if reward_a == 0:
                 reward_b = self.move_b(b_action)
+                reward_a = -reward_b
             else:
-                reward_b = 0
+                reward_b = -1
         else:
             reward_b = self.move_b(b_action)
             if reward_b == 0:
                 reward_a = self.move_a(a_action)
+                reward_b = -reward_a
             else:
-                reward_a = 0
+                reward_a = -1
         return reward_a, reward_b
 
-    def game(self, train=True):
+    def game(self, train=True, a_fixed=False, b_fixed=False):
         self.reset_position()
         reward_a = 0
         reward_b = 0
         t = 0
-        while reward_a != 1 and reward_b != 1:                  # continue game until someone scores
+        while reward_a == 0 and reward_b == 0:        # continue game until someone scores
             t += 1
             if random.random() >= 0.1 or train:
                 a_action = self.agentA.choose_a(self.epsilon)
@@ -279,15 +271,17 @@ class Soccer:
                 cur_state = self.agentA.pos + self.agentB.pos
                 self.agentA.set_cur_state(cur_state)
                 self.agentB.set_cur_state(cur_state)
-
-                self.agentA.update_values(a_action, self.alpha, reward_a, self.gamma, self.delta_l, self.delta_w)
-                if type(self.agentB) is WAgent or type(self.agentB) is QAgent:
+                if not a_fixed:
+                    self.agentA.update_values(a_action, self.alpha, reward_a, self.gamma, self.delta_l, self.delta_w)
+                if (type(self.agentB) is WAgent or type(self.agentB) is QAgent) and not b_fixed:
                     self.agentB.update_values(b_action, self.alpha, reward_b, self.gamma, self.delta_l, self.delta_w)
-
+                self.alpha *= self.decay
         if DEBUG:
             print("t steps: ", t)
             print("")
             print("")
+        if reward_a == -1:
+            reward_a = 0
         return t, reward_a
 
 def main():
@@ -295,43 +289,67 @@ def main():
     steps_tested = 100000
 
     # WW
-    # Train
-    s = Soccer(0.2, 1.0, 0.9, "WW", 0.9, 0.1)
+    # Train AgentA
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "WW", 0.8, 0.2)
     steps = 0
     while steps < steps_trained:
         cur_steps, won = s.game()
         steps += cur_steps
+    trained_agentA = s.agentA
+
+    # Train Competitor
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s.agentB = trained_agentA
+    steps = 0
+    while steps < steps_trained:
+        cur_steps, won = s.game(b_fixed=True)
+        steps += cur_steps
+    trained_agentB = s.agentA
 
     # Test
-    s.alpha = 0
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
     steps = 0
     won = 0
+    s.agentA = trained_agentA
     s.agentB = RAgent()
-    s.version = "WR"
+    # s.agentB = trained_agentB
     games_played = 0
     while steps < steps_tested:
-        cur_steps, cur_won = s.game()
+        cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
         steps += cur_steps
         won += cur_won
         games_played += 1
     print("num games: ", games_played)
-    print("WW percentage games won: ", won/games_played * 100, "%")
+    print("WR percentage games won: ", won/games_played * 100, "%")
 
     # WR
-    # Train
-    s = Soccer(0.2, 1.0, 0.9, "WR", 0.9, 0.1)
+    # Train AgentA
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "WR", 0.8, 0.2)
     steps = 0
     while steps < steps_trained:
         cur_steps, won = s.game()
         steps += cur_steps
+    trained_agentA = s.agentA
+
+    # Train Competitor
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s.agentB = trained_agentA
+    steps = 0
+    while steps < steps_trained:
+        cur_steps, won = s.game(b_fixed=True)
+        steps += cur_steps
+    trained_agentB = s.agentA
 
     # Test
-    s.alpha = 0
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
     steps = 0
     won = 0
+    s.agentA = trained_agentA
+    s.agentB = RAgent()
+    # s.agentB = trained_agentB
     games_played = 0
     while steps < steps_tested:
-        cur_steps, cur_won = s.game()
+        cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
         steps += cur_steps
         won += cur_won
         games_played += 1
@@ -339,22 +357,33 @@ def main():
     print("WR percentage games won: ", won/games_played * 100, "%")
 
     # QQ
-    # Train
-    s = Soccer(0.2, 1.0, 0.9, "QQ")
+    # Train AgentA
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
     steps = 0
     while steps < steps_trained:
         cur_steps, won = s.game()
         steps += cur_steps
+    trained_agentA = s.agentA
+
+    # Train Competitor
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s.agentB = trained_agentA
+    steps = 0
+    while steps < steps_trained:
+        cur_steps, won = s.game(b_fixed=True)
+        steps += cur_steps
+    trained_agentB = s.agentA
 
     # Test
-    s.alpha = 0
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
     steps = 0
     won = 0
+    s.agentA = trained_agentA
     s.agentB = RAgent()
-    s.version = "QR"
+    # s.agentB = trained_agentB
     games_played = 0
     while steps < steps_tested:
-        cur_steps, cur_won = s.game()
+        cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
         steps += cur_steps
         won += cur_won
         games_played += 1
@@ -362,24 +391,37 @@ def main():
     print("QQ percentage games won: ", won/games_played * 100, "%")
 
     # QR
-    # Train
-    s = Soccer(0.2, 1.0, 0.9, "QR")
+    # Train AgentA
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QR")
     steps = 0
     while steps < steps_trained:
         cur_steps, won = s.game()
         steps += cur_steps
+    trained_agentA = s.agentA
+
+    # Train Competitor
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s.agentB = trained_agentA
+    steps = 0
+    while steps < steps_trained:
+        cur_steps, won = s.game(b_fixed=True)
+        steps += cur_steps
+    trained_agentB = s.agentA
 
     # Test
-    s.alpha = 0
+    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
     steps = 0
     won = 0
+    s.agentA = trained_agentA
+    # s.agentB = RAgent()
+    s.agentB = trained_agentB
     games_played = 0
     while steps < steps_tested:
-        cur_steps, cur_won = s.game(False)
+        cur_steps, cur_won = s.game(train=False, a_fixed=True, b_fixed=True)
         steps += cur_steps
         won += cur_won
         games_played += 1
     print("num games: ", games_played)
-    print("QR percentage games won: ", won/games_played * 100, "%")
+    print("QQ percentage games won: ", won/games_played * 100, "%")
 
 main()
