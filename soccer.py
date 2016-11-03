@@ -281,6 +281,9 @@ class Soccer:
                 if (type(self.agentB) is WAgent or type(self.agentB) is QAgent) and not b_fixed:
                     self.agentB.update_values(b_action, self.alpha, reward_b, self.gamma, self.delta_l, self.delta_w)
                 self.alpha *= self.decay
+                if (self.delta_l):
+                    self.delta_l *= self.decay
+                    self.delta_w *= self.decay
         if DEBUG:
             print("t steps: ", t)
             print("")
@@ -290,12 +293,12 @@ class Soccer:
         return t, reward_a
 
 def main():
-    steps_trained = 1000000
+    steps_trained = 1250000
     steps_tested = 100000
 
     # WW
     # Train AgentA
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "WW", 0.8, 0.2)
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "WW", 0.8, 0.2)
     steps = 0
     while steps < steps_trained:
         cur_steps, won = s.game()
@@ -303,7 +306,7 @@ def main():
     trained_agentA = s.agentA
 
     # Train Competitor
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     s.agentB = trained_agentA
     steps = 0
     while steps < steps_trained:
@@ -313,7 +316,7 @@ def main():
 
     # Test
     # vs. Random
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "WR")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "WR")
     steps = 0
     won = 0
     s.agentA = trained_agentA
@@ -329,7 +332,7 @@ def main():
     print("WW vs. random percentage games won: ", won/games_played * 100, "%")
 
     # vs. Competitor
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     steps = 0
     won = 0
     s.agentA = trained_agentA
@@ -347,7 +350,7 @@ def main():
 
     # WR
     # Train AgentA
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "WR", 0.8, 0.2)
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "WR", 0.8, 0.2)
     steps = 0
     while steps < steps_trained:
         cur_steps, won = s.game()
@@ -355,7 +358,7 @@ def main():
     trained_agentA = s.agentA
 
     # Train Competitor
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     s.agentB = trained_agentA
     steps = 0
     while steps < steps_trained:
@@ -365,7 +368,7 @@ def main():
 
     # Test
     # vs. random
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "WR")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "WR")
     steps = 0
     won = 0
     s.agentA = trained_agentA
@@ -380,7 +383,7 @@ def main():
     print("num games: ", games_played)
     print("WR vs. random percentage games won: ", won/games_played * 100, "%")
 
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     steps = 0
     won = 0
     s.agentA = trained_agentA
@@ -398,7 +401,7 @@ def main():
 
     # QQ
     # Train AgentA
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     steps = 0
     while steps < steps_trained:
         cur_steps, won = s.game()
@@ -406,7 +409,7 @@ def main():
     trained_agentA = s.agentA
 
     # Train Competitor
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     s.agentB = trained_agentA
     steps = 0
     while steps < steps_trained:
@@ -416,7 +419,7 @@ def main():
 
     # Test
     # vs. Random
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QR")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QR")
     steps = 0
     won = 0
     s.agentA = trained_agentA
@@ -432,7 +435,7 @@ def main():
     print("QQ vs. random percentage games won: ", won/games_played * 100, "%")
 
     # vs. Competitor
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     steps = 0
     won = 0
     s.agentA = trained_agentA
@@ -450,7 +453,7 @@ def main():
 
     # QR
     # Train AgentA
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QR")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QR")
     steps = 0
     while steps < steps_trained:
         cur_steps, won = s.game()
@@ -458,7 +461,7 @@ def main():
     trained_agentA = s.agentA
 
     # Train Competitor
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     s.agentB = trained_agentA
     steps = 0
     while steps < steps_trained:
@@ -468,7 +471,7 @@ def main():
 
     # Test
     # vs. Random
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QR")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QR")
     steps = 0
     won = 0
     s.agentA = trained_agentA
@@ -485,7 +488,7 @@ def main():
     print("QR vs. random percentage games won: ", won/games_played * 100, "%")
 
 
-    s = Soccer(0.2, 1.0, 0.9999954, 0.9, "QQ")
+    s = Soccer(0.2, 1.0, 0.99999999, 0.9, "QQ")
     steps = 0
     won = 0
     s.agentA = trained_agentA
@@ -512,7 +515,8 @@ def main():
     plt.bar(ind, num_games, width=width)
     plt.xticks(ind + width / 2, labels)
     plt.title("Number of Games Played")
-    plt.show()
+    fig.savefig("5.png")
+    plt.close(fig)
 
     percent_won = [percent_won_WWR, percent_won_WWC, percent_won_WRR, percent_won_WRC, percent_won_QQR, percent_won_QQC, percent_won_QRR, percent_won_QRC]
     labels = ["WWR", "WWC", "WRR", "WRC", "QQR", "QQC", "QRR", "QRC"]
@@ -524,6 +528,7 @@ def main():
     plt.bar(ind, percent_won, width=width)
     plt.xticks(ind + width / 2, labels)
     plt.title("Percent Won")
-    plt.show()
+    fig.savefig("6.png")
+    plt.close(fig)
 
 main()
